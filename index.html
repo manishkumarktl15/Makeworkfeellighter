@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Calm, capable AI agents and chatbots designed around your business." />
+  <title>Fieldwork — AI agents that make work flow</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Instrument+Serif:ital@0;1&display=swap');
+
+    :root {
+      --ink: #20211e;
+      --muted: #6e716b;
+      --line: #dedfd9;
+      --paper: #f8f8f5;
+      --warm: #efefe9;
+      --accent: #687a57;
+      --accent-deep: #45543a;
+      --white: #ffffff;
+      --radius: 18px;
+      --max: 1220px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "DM Sans", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body.menu-open, body.modal-open { overflow: hidden; }
+    a { color: inherit; text-decoration: none; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(calc(100% - 48px), var(--max)); margin: 0 auto; }
+
+    .eyebrow {
+      display: flex; align-items: center; gap: 9px;
+      color: var(--muted); font: 500 11px/1 "DM Mono", monospace;
+      letter-spacing: .075em; text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: ""; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent); display: inline-block;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      border: 1px solid transparent; border-radius: 100px; padding: 12px 18px;
+      font-size: 14px; font-weight: 500; transition: .25s ease;
+      white-space: nowrap;
+    }
+    .btn-dark { color: #fff; background: var(--ink); }
+    .btn-dark:hover { background: var(--accent-deep); transform: translateY(-2px); }
+    .btn-light { border-color: var(--line); background: transparent; }
+    .btn-light:hover { background: var(--white); border-color: var(--ink); }
+    .arrow { font-size: 18px; line-height: 10px; transition: transform .2s ease; }
+    .btn:hover .arrow { transform: translateX(3px); }
+
+    header {
+      height: 78px; display: flex; align-items: center; border-bottom: 1px solid transparent;
+      position: relative; z-index: 10; transition: background .25s, border .25s;
+    }
+    header.stuck {
+      position: sticky; top: 0; background: rgba(248,248,245,.92);
+      backdrop-filter: blur(14px); border-color: var(--line);
+    }
+    .nav { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .brand { font-size: 20px; letter-spacing: -.055em; font-weight: 600; }
+    .brand-mark { color: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 28px; margin-left: 95px; }
+    .nav-links a { color: #4d504b; font-size: 14px; transition: color .2s; }
+    .nav-links a:hover { color: var(--accent-deep); }
+    .nav-cta { padding: 10px 16px; font-size: 13px; }
+    .menu-toggle { display: none; border: 0; background: transparent; padding: 8px 0 8px 12px; }
+    .menu-toggle span { width: 23px; height: 1px; background: var(--ink); display: block; margin: 5px 0; transition: .25s; }
+
+    .hero { padding: 108px 0 92px; }
+    .hero-grid {
+      display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(390px, .95fr);
+      gap: 75px; align-items: end;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      font-size: clamp(52px, 6.55vw, 94px); font-weight: 400; line-height: .94;
+      letter-spacing: -.065em; margin: 22px 0 28px; max-width: 700px;
+    }
+    h1 em, h2 em { font-family: "Instrument Serif", Georgia, serif; font-weight: 400; letter-spacing: -.04em; }
+    .hero-copy { max-width: 450px; color: #5b5e58; font-size: 17px; line-height: 1.65; margin-bottom: 31px; }
+    .hero-actions { display: flex; gap: 11px; flex-wrap: wrap; }
+
+    .agent-canvas {
+      min-height: 414px; background: #e8e9e2; border-radius: var(--radius);
+      padding: 27px; position: relative; overflow: hidden;
+    }
+    .canvas-head { display: flex; justify-content: space-between; font: 11px "DM Mono", monospace; color: #74776e; position: relative; z-index: 2; }
+    .live { display: flex; gap: 7px; align-items: center; }
+    .live i { width: 6px; height: 6px; border-radius: 50%; background: #718c5a; animation: pulse 1.8s infinite; }
+    .flow {
+      position: absolute; inset: 77px 22px 25px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .flow-line {
+      position: absolute; left: 50%; top: 34px; bottom: 37px; width: 1px;
+      background: repeating-linear-gradient(to bottom, #b8bbb1 0 5px, transparent 5px 10px);
+    }
+    .node {
+      position: relative; z-index: 1; background: rgba(255,255,255,.87); border: 1px solid rgba(211,213,207,.9);
+      border-radius: 12px; padding: 13px 15px; display: flex; align-items: center; gap: 11px;
+      width: 78%; box-shadow: 0 4px 13px rgba(47,52,43,.035); font-size: 13px;
+    }
+    .node:nth-child(2) { align-self: flex-end; }
+    .node-icon {
+      flex: 0 0 27px; width: 27px; height: 27px; border-radius: 7px; display: grid; place-items: center;
+      background: #ecf0e8; color: var(--accent-deep); font-size: 14px;
+    }
+    .node small { display: block; color: #85877f; font-size: 10px; margin-top: 1px; }
+    .node strong { font-weight: 500; }
+    .canvas-orb {
+      width: 128px; height: 128px; position: absolute; right: -38px; bottom: -42px;
+      background: #cfd7c5; border-radius: 50%; filter: blur(1px);
+    }
+
+    .logos { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 25px 0; }
+    .logos-inner { display: flex; align-items: center; justify-content: space-between; gap: 25px; }
+    .logos-label { font: 11px/1.4 "DM Mono", monospace; color: var(--muted); max-width: 150px; text-transform: uppercase; letter-spacing: .04em; }
+    .logo-list { display: flex; align-items: center; justify-content: space-between; flex: 1; max-width: 770px; color: #777a72; }
+    .logo-list b { font-size: 18px; letter-spacing: -.06em; font-weight: 600; }
+    .logo-list b:nth-child(2) { font-family: Georgia, serif; font-style: italic; font-weight: 400; font-size: 23px; }
+    .logo-list b:nth-child(3) { letter-spacing: .05em; font-size: 15px; }
+    .logo-list b:nth-child(4) { font-size: 20px; }
+    .logo-list b:nth-child(5) { font-family: Georgia, serif; font-size: 21px; font-weight: 400; }
+
+    section { padding: 126px 0; }
+    .section-top { display: flex; justify-content: space-between; gap: 30px; margin-bottom: 61px; }
+    h2 { font-size: clamp(39px, 4.2vw, 61px); line-height: .99; letter-spacing: -.055em; font-weight: 400; margin: 15px 0 0; max-width: 670px; }
+    .section-intro { color: var(--muted); max-width: 295px; padding-top: 34px; font-size: 15px; line-height: 1.6; }
+
+    .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); }
+    .service { padding: 30px 29px 29px 0; min-height: 286px; position: relative; }
+    .service + .service { border-left: 1px solid var(--line); padding-left: 29px; }
+    .service-num { color: #8a8c85; font: 11px "DM Mono", monospace; }
+    .service h3 { font-size: 22px; letter-spacing: -.035em; font-weight: 500; margin: 43px 0 10px; }
+    .service p { color: var(--muted); font-size: 14px; max-width: 290px; margin: 0; line-height: 1.6; }
+    .service-link { position: absolute; bottom: 28px; color: var(--accent-deep); font-size: 13px; font-weight: 500; }
+    .service-link:hover { text-decoration: underline; }
+
+    .featured { background: var(--warm); }
+    .case-grid { display: grid; grid-template-columns: .91fr 1.09fr; border: 1px solid #dcddd6; border-radius: var(--radius); overflow: hidden; background: var(--paper); }
+    .case-content { padding: clamp(32px, 4.2vw, 61px); display: flex; flex-direction: column; align-items: flex-start; }
+    .tag { padding: 5px 9px; border: 1px solid var(--line); border-radius: 100px; color: var(--muted); font: 10px "DM Mono", monospace; }
+    .case-content h3 { font-size: clamp(31px, 3.3vw, 47px); font-weight: 400; letter-spacing: -.055em; line-height: 1.02; margin: 27px 0 18px; max-width: 400px; }
+    .case-content p { font-size: 15px; line-height: 1.6; color: var(--muted); max-width: 382px; }
+    .metrics { display: flex; gap: 34px; margin-top: auto; padding-top: 45px; }
+    .metric strong { display: block; font-size: 27px; font-weight: 500; letter-spacing: -.05em; }
+    .metric span { color: var(--muted); font-size: 11px; }
+    .case-visual { min-height: 455px; background: #dce3d4; padding: 30px; position: relative; overflow: hidden; }
+    .chat-window {
+      position: absolute; width: min(80%, 370px); right: 12%; top: 64px; background: #fbfbf9; border-radius: 14px;
+      box-shadow: 0 18px 40px rgba(42,50,35,.13); overflow: hidden;
+    }
+    .chat-top { border-bottom: 1px solid #e8e8e3; padding: 13px 16px; display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; }
+    .avatar { height: 22px; width: 22px; border-radius: 7px; background: var(--accent); color: white; display: grid; place-items: center; font-size: 10px; }
+    .chat-body { padding: 17px; min-height: 253px; font-size: 11px; }
+    .bubble { padding: 9px 11px; border-radius: 9px; margin-bottom: 11px; max-width: 83%; line-height: 1.45; }
+    .bubble.in { background: #f0f1ed; color: #5e625b; }
+    .bubble.out { background: #e1e9d9; margin-left: auto; color: #405038; }
+    .typing { margin: 15px 0 0 3px; display: flex; gap: 4px; }
+    .typing i { width: 4px; height: 4px; border-radius: 50%; background: #a0a49b; animation: bounce 1s infinite alternate; }
+    .typing i:nth-child(2) { animation-delay: .15s; }.typing i:nth-child(3) { animation-delay: .3s; }
+    .floating-card { position: absolute; left: 8%; bottom: 39px; padding: 15px 17px; border-radius: 11px; background: var(--ink); color: #fff; width: 174px; box-shadow: 0 13px 25px rgba(28,32,25,.18); }
+    .floating-card span { color: #c4d0ba; font: 10px "DM Mono", monospace; }
+    .floating-card strong { display: block; margin-top: 5px; font-size: 13px; font-weight: 500; }
+
+    .process-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .step { padding-top: 18px; border-top: 1px solid var(--ink); }
+    .step-num { color: var(--accent); font: 11px "DM Mono", monospace; }
+    .step h3 { font-size: 18px; font-weight: 500; letter-spacing: -.03em; margin: 28px 0 10px; }
+    .step p { color: var(--muted); font-size: 13px; line-height: 1.55; margin: 0; max-width: 220px; }
+
+    .cta { padding: 105px 0; background: #293027; color: #f7f7f2; text-align: center; }
+    .cta .eyebrow { justify-content: center; color: #b5b9af; }
+    .cta h2 { max-width: 750px; margin: 20px auto 27px; }
+    .cta p { color: #b9bdb4; max-width: 450px; margin: 0 auto 30px; }
+    .cta .btn { background: #e8eee2; color: #33402d; }
+    .cta .btn:hover { background: #fff; }
+
+    footer { padding: 31px 0; background: #293027; color: #b9bdb4; border-top: 1px solid #454b43; }
+    .footer-inner { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    .footer-brand { color: #fff; }
+    .footer-links { display: flex; gap: 22px; font-size: 12px; }
+    .footer-links a:hover { color: white; }
+    .copyright { font: 10px "DM Mono", monospace; }
+
+    .modal {
+      display: none; position: fixed; inset: 0; z-index: 30; background: rgba(27,30,26,.45);
+      padding: 20px; align-items: center; justify-content: center; backdrop-filter: blur(5px);
+    }
+    .modal.show { display: flex; }
+    .modal-card { background: var(--paper); max-width: 550px; width: 100%; border-radius: 18px; padding: 34px; position: relative; box-shadow: 0 24px 70px rgba(0,0,0,.2); animation: enter .25s ease; }
+    .close { position: absolute; right: 18px; top: 17px; border: 0; background: transparent; font-size: 25px; color: var(--muted); }
+    .modal-card h2 { font-size: 38px; margin: 13px 0 8px; }
+    .modal-card > p { color: var(--muted); font-size: 14px; margin-bottom: 25px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    label { display: block; font-size: 12px; font-weight: 500; margin: 0 0 6px; }
+    input, select, textarea { width: 100%; border: 1px solid var(--line); background: white; border-radius: 8px; padding: 11px 12px; color: var(--ink); outline: none; font-size: 14px; margin-bottom: 15px; }
+    textarea { resize: vertical; min-height: 76px; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(104,122,87,.1); }
+    .success { display: none; text-align: center; padding: 35px 0 17px; }
+    .success .check { width: 48px; height: 48px; display: grid; place-items: center; background: #e2eadb; color: var(--accent-deep); border-radius: 50%; margin: 0 auto 16px; font-size: 22px; }
+    .success h3 { font-size: 25px; margin: 0 0 8px; font-weight: 500; }
+    .success p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    @keyframes pulse { 50% { opacity: .35; transform: scale(.75); } }
+    @keyframes bounce { to { transform: translateY(-3px); opacity: .55; } }
+    @keyframes enter { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+
+    @media (max-width: 800px) {
+      .shell { width: min(calc(100% - 36px), var(--max)); }
+      header { height: 67px; }
+      .nav-links { display: none; }
+      .menu-toggle { display: block; }
+      .nav-cta { display: none; }
+      .mobile-nav {
+        display: flex; opacity: 0; pointer-events: none; position: fixed; inset: 67px 0 0;
+        background: var(--paper); z-index: 9; flex-direction: column; padding: 35px 24px; gap: 25px;
+        transform: translateX(15px); transition: .25s ease;
+      }
+      .mobile-nav.open { opacity: 1; pointer-events: all; transform: none; }
+      .mobile-nav a { font-size: 28px; letter-spacing: -.045em; }
+      .mobile-nav .btn { margin-top: 12px; align-self: flex-start; }
+      .hero { padding: 70px 0 65px; }
+      .hero-grid { grid-template-columns: 1fr; gap: 42px; }
+      h1 { max-width: 630px; }
+      .agent-canvas { min-height: 350px; }
+      .logos-inner { align-items: flex-start; }
+      .logo-list { flex-wrap: wrap; justify-content: flex-end; gap: 14px 25px; }
+      section { padding: 82px 0; }
+      .section-top { display: block; margin-bottom: 43px; }
+      .section-intro { padding-top: 20px; }
+      .services-grid { grid-template-columns: 1fr; }
+      .service { min-height: 220px; padding: 23px 0 28px; border-bottom: 1px solid var(--line); }
+      .service + .service { border-left: 0; padding-left: 0; }
+      .service h3 { margin-top: 27px; }
+      .service-link { bottom: 27px; right: 0; }
+      .case-grid { grid-template-columns: 1fr; }
+      .case-visual { min-height: 390px; }
+      .process-grid { grid-template-columns: 1fr 1fr; gap: 35px 20px; }
+      .cta { padding: 78px 0; }
+    }
+
+    @media (min-width: 801px) { .mobile-nav { display: none; } }
+    @media (max-width: 500px) {
+      .shell { width: min(calc(100% - 32px), var(--max)); }
+      h1 { font-size: 51px; }
+      .hero-copy { font-size: 16px; }
+      .logos-label { max-width: 95px; font-size: 9px; }
+      .logo-list { gap: 13px; }.logo-list b { font-size: 15px !important; }
+      .metrics { gap: 22px; }
+      .case-content { padding: 29px; }
+      .case-visual { min-height: 344px; }
+      .chat-window { right: 7%; top: 43px; width: 83%; }
+      .floating-card { left: 6%; bottom: 22px; }
+      .process-grid { grid-template-columns: 1fr; gap: 27px; }
+      .step h3 { margin-top: 16px; }
+      .footer-inner { align-items: flex-start; flex-direction: column; }
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+      .modal-card { padding: 27px 22px; }
+    }
+  </style>
+</head>
+<body>
+  <header id="header">
+    <div class="shell nav">
+      <a href="#" class="brand">field<span class="brand-mark">/</span>work</a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#services">What we do</a>
+        <a href="#work">Selected work</a>
+        <a href="#process">Our process</a>
+      </nav>
+      <button class="btn btn-dark nav-cta" data-open-modal>Start a conversation <span class="arrow">→</span></button>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false"><span></span><span></span></button>
+    </div>
+  </header>
+
+  <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation">
+    <a href="#services">What we do</a>
+    <a href="#work">Selected work</a>
+    <a href="#process">Our process</a>
+    <button class="btn btn-dark" data-open-modal>Start a conversation <span class="arrow">→</span></button>
+  </nav>
+
+  <main>
+    <section class="hero shell">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">AI systems for considered businesses</div>
+          <h1>Make room for the work that <em>matters.</em></h1>
+          <p class="hero-copy">We design practical AI agents and conversational tools that quietly handle the repeatable work — so your team can focus on what only people can do.</p>
+          <div class="hero-actions">
+            <button class="btn btn-dark" data-open-modal>Plan your AI system <span class="arrow">→</span></button>
+            <a href="#work" class="btn btn-light">See our work</a>
+          </div>
+        </div>
+        <div class="agent-canvas" aria-label="Example AI workflow visualization">
+          <div class="canvas-head"><span>WORKFLOW / 01</span><span class="live"><i></i> RUNNING</span></div>
+          <div class="flow">
+            <div class="flow-line"></div>
+            <div class="node">
+              <div class="node-icon">✦</div>
+              <div><strong>New customer request</strong><small>From email &amp; web chat</small></div>
+            </div>
+            <div class="node">
+              <div class="node-icon">⌘</div>
+              <div><strong>AI understands context</strong><small>Searches your knowledge base</small></div>
+            </div>
+            <div class="node">
+              <div class="node-icon">✓</div>
+              <div><strong>Helpful answer delivered</strong><small>Or routed to the right person</small></div>
+            </div>
+          </div>
+          <div class="canvas-orb"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="logos">
+      <div class="shell logos-inner">
+        <div class="logos-label">Trusted by teams building with care</div>
+        <div class="logo-list" aria-label="Client logos">
+          <b>northstar</b><b>morrow</b><b>STUDIO/47</b><b>Caraway</b><b>Onda</b>
+        </div>
+      </div>
+    </div>
+
+    <section class="shell" id="services">
+      <div class="section-top">
+        <div>
+          <div class="eyebrow">What we build</div>
+          <h2>Useful intelligence,<br />made <em>human.</em></h2>
+        </div>
+        <p class="section-intro">No bloated transformations or shiny demos. Just well-made systems that fit naturally into the way your business already works.</p>
+      </div>
+      <div class="services-grid">
+        <article class="service">
+          <span class="service-num">01</span>
+          <h3>AI workflow agents</h3>
+          <p>Purpose-built agents that research, qualify, route, draft, and complete work across your existing tools.</p>
+          <a href="#contact" class="service-link" data-open-modal>Explore agents →</a>
+        </article>
+        <article class="service">
+          <span class="service-num">02</span>
+          <h3>Knowledge chatbots</h3>
+          <p>Thoughtful conversational experiences that give customers and teams clear, trustworthy answers around the clock.</p>
+          <a href="#contact" class="service-link" data-open-modal>Explore chatbots →</a>
+        </article>
+        <article class="service">
+          <span class="service-num">03</span>
+          <h3>AI foundations</h3>
+          <p>We organize your knowledge, map your opportunities, and create the guardrails for AI your team can trust.</p>
+          <a href="#contact" class="service-link" data-open-modal>Explore foundations →</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="featured" id="work">
+      <div class="shell">
+        <div class="section-top">
+          <div>
+            <div class="eyebrow">Selected work</div>
+            <h2>Less back-and-forth.<br /><em>More forward.</em></h2>
+          </div>
+          <p class="section-intro">We partner with thoughtful teams to make AI feel less like a disruption and more like a natural next step.</p>
+        </div>
+        <article class="case-grid">
+          <div class="case-content">
+            <span class="tag">Customer experience · SaaS</span>
+            <h3>Turning every question into a good conversation.</h3>
+            <p>We created a support agent for Morrow that understands product context, resolves common requests, and knows exactly when to bring in a human.</p>
+            <div class="metrics">
+              <div class="metric"><strong>42%</strong><span>fewer support tickets</span></div>
+              <div class="metric"><strong>24/7</strong><span>considered replies</span></div>
+            </div>
+          </div>
+          <div class="case-visual">
+            <div class="chat-window">
+              <div class="chat-top"><span class="avatar">M</span> Morrow assistant</div>
+              <div class="chat-body">
+                <div class="bubble in">Can I change the delivery address after placing an order?</div>
+                <div class="bubble out">If your order hasn't been dispatched, I can help update it. Could you share your order number?</div>
+                <div class="bubble in">It's #MRW-4829</div>
+                <div class="bubble out">Thank you — your order is still being prepared. What would you like the new delivery address to be?</div>
+                <div class="typing"><i></i><i></i><i></i></div>
+              </div>
+            </div>
+            <div class="floating-card"><span>AGENT ACTION</span><strong>Order status found ✓</strong></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="shell" id="process">
+      <div class="section-top">
+        <div>
+          <div class="eyebrow">How we work</div>
+          <h2>A calm path from<br />idea to <em>impact.</em></h2>
+        </div>
+        <p class="section-intro">Clear thinking before clever technology. We work closely with your team, in small deliberate steps.</p>
+      </div>
+      <div class="process-grid">
+        <article class="step"><span class="step-num">01 / Discover</span><h3>Find the friction</h3><p>We listen to your team and uncover the work that is ready to be made lighter.</p></article>
+        <article class="step"><span class="step-num">02 / Design</span><h3>Map the right system</h3><p>We shape a focused solution around your processes, data, and people.</p></article>
+        <article class="step"><span class="step-num">03 / Build</span><h3>Bring it to life</h3><p>We build, test, and refine your agent with careful attention to every edge case.</p></article>
+        <article class="step"><span class="step-num">04 / Grow</span><h3>Learn together</h3><p>We stay close after launch, improving the system as your business evolves.</p></article>
+      </div>
+    </section>
+
+    <section class="cta" id="contact">
+      <div class="shell">
+        <div class="eyebrow">Start simply</div>
+        <h2>There is probably a better way to do that.</h2>
+        <p>Tell us about the work taking up too much of your team's time. We'll help you find the useful first step.</p>
+        <button class="btn" data-open-modal>Book a discovery call <span class="arrow">→</span></button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-inner">
+      <a href="#" class="brand footer-brand">field<span class="brand-mark">/</span>work</a>
+      <div class="footer-links"><a href="#services">Services</a><a href="#work">Work</a><a href="mailto:hello@fieldwork.ai">hello@fieldwork.ai</a></div>
+      <span class="copyright">© 2025 FIELDWORK STUDIO</span>
+    </div>
+  </footer>
+
+  <div class="modal" id="contactModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <button class="close" id="closeModal" aria-label="Close">×</button>
+      <div id="formContent">
+        <div class="eyebrow">A good first conversation</div>
+        <h2 id="modalTitle">Let's make work lighter.</h2>
+        <p>Share a few details and we'll be in touch within two working days.</p>
+        <form id="contactForm">
+          <div class="form-row">
+            <div><label for="name">Your name</label><input id="name" required placeholder="Jane Smith" /></div>
+            <div><label for="email">Work email</label><input id="email" type="email" required placeholder="jane@company.com" /></div>
+          </div>
+          <label for="interest">What are you exploring?</label>
+          <select id="interest" required>
+            <option value="" disabled selected>Select an option</option>
+            <option>AI workflow agent</option>
+            <option>Knowledge chatbot</option>
+            <option>AI strategy and foundations</option>
+            <option>Not sure yet</option>
+          </select>
+          <label for="message">A little context <span style="font-weight:400;color:#848780">(optional)</span></label>
+          <textarea id="message" placeholder="What would you love to spend less time doing?"></textarea>
+          <button type="submit" class="btn btn-dark" style="width:100%; margin-top:2px;">Send enquiry <span class="arrow">→</span></button>
+        </form>
+      </div>
+      <div class="success" id="successMessage">
+        <div class="check">✓</div>
+        <h3>Thank you, we'll be in touch.</h3>
+        <p>Your note is on its way to our team. Expect a thoughtful reply within two working days.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('contactModal');
+    const formContent = document.getElementById('formContent');
+    const successMessage = document.getElementById('successMessage');
+    const openModal = () => {
+      modal.classList.add('show');
+      document.body.classList.add('modal-open');
+      document.getElementById('name').focus();
+      document.getElementById('mobileNav').classList.remove('open');
+      document.body.classList.remove('menu-open');
+    };
+    const closeModal = () => {
+      modal.classList.remove('show');
+      document.body.classList.remove('modal-open');
+    };
+    document.querySelectorAll('[data-open-modal]').forEach(button => button.addEventListener('click', openModal));
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      formContent.style.display = 'none';
+      successMessage.style.display = 'block';
+      setTimeout(() => {
+        closeModal();
+        setTimeout(() => {
+          formContent.style.display = 'block';
+          successMessage.style.display = 'none';
+          this.reset();
+        }, 300);
+      }, 2800);
+    });
+
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileNav = document.getElementById('mobileNav');
+    menuToggle.addEventListener('click', () => {
+      const isOpen = mobileNav.classList.toggle('open');
+      document.body.classList.toggle('menu-open', isOpen);
+      menuToggle.setAttribute('aria-expanded', isOpen);
+    });
+    document.querySelectorAll('.mobile-nav a').forEach(link => link.addEventListener('click', () => {
+      mobileNav.classList.remove('open');
+      document.body.classList.remove('menu-open');
+    }));
+
+    const header = document.getElementById('header');
+    window.addEventListener('scroll', () => header.classList.toggle('stuck', window.scrollY > 15));
+  </script>
+</body>
+</html>
